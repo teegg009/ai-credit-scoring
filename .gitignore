@@ -1,0 +1,24 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+# Dataset (Kaggle — download separately, do not redistribute)
+GiveMeSomeCredit/
+GiveMeSomeCredit.zip
+X_val_sample.csv
+
+# Generated plots
+roc_curve.png
+shap_summary.png
+shap_bar.png
+
+# Local tool settings
+.claude/
+.vscode/
+frontend/tsconfig.tsbuildinfo
