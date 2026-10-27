@@ -17,19 +17,23 @@ df = df.drop(columns=['Unnamed: 0'])
 print("จำนวนช่องว่าง MonthlyIncome:", df['MonthlyIncome'].isna().sum())
 print("จำนวนช่องว่าง NumberOfDependents:", df['NumberOfDependents'].isna().sum())
 
-# เติมช่องว่าง + เก็บ signal ว่าเคย missing
-df['MonthlyIncome_missing'] = df['MonthlyIncome'].isna().astype(int)
-df['MonthlyIncome'] = df['MonthlyIncome'].fillna(df['MonthlyIncome'].median())
-df['NumberOfDependents'] = df['NumberOfDependents'].fillna(0)
-
-# แยก feature (X) กับ label (y)
 X = df.drop(columns=['SeriousDlqin2yrs'])
 y = df['SeriousDlqin2yrs']
 
-# แบ่ง train/validation
+# 60/20/20 train/val/test
+X_tmp, X_test, y_tmp, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=42)
 X_train, X_val, y_train, y_val = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
-)
+    X_tmp, y_tmp, test_size=0.25, stratify=y_tmp, random_state=42)
+
+# impute using train-only statistics
+median_income = X_train['MonthlyIncome'].median()
+print("TRAIN_INCOME_MEDIAN:", median_income)
+X_train, X_val, X_test = X_train.copy(), X_val.copy(), X_test.copy()
+for part in (X_train, X_val, X_test):
+    part['MonthlyIncome_missing'] = part['MonthlyIncome'].isna().astype(int)
+    part['MonthlyIncome'] = part['MonthlyIncome'].fillna(median_income)
+    part['NumberOfDependents'] = part['NumberOfDependents'].fillna(0)
 
 # คำนวณ scale_pos_weight (เพราะข้อมูล imbalance)
 neg, pos = (y_train == 0).sum(), (y_train == 1).sum()
@@ -62,6 +66,11 @@ print("เซฟ X_val สำหรับ SHAP เรียบร้อย: X_va
 y_pred_proba = model.predict_proba(X_val)[:, 1]
 print("\nAUC Score:", roc_auc_score(y_val, y_pred_proba))
 print("\n", classification_report(y_val, model.predict(X_val)))
+
+# ประเมินบน test set (ไม่ได้ใช้ตอน early stopping)
+y_test_proba = model.predict_proba(X_test)[:, 1]
+print("\nTest AUC Score:", roc_auc_score(y_test, y_test_proba))
+print("\n", classification_report(y_test, model.predict(X_test)))
 
 importance = pd.DataFrame({
     'feature': X_train.columns,
