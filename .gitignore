@@ -14,7 +14,7 @@ GiveMeSomeCredit.zip
 X_val_sample.csv
 
 # Generated plots
-roc_curve.png
+/roc_curve.png
 shap_summary.png
 shap_bar.png
 

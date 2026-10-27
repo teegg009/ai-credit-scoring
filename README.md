@@ -89,14 +89,41 @@ python train.py
 
 Other endpoints: `GET /health`, `GET /predictions?limit=20&offset=0` (requires the database).
 
+## Results
+
+Data is split 60/20/20 (train / validation / test, stratified). Missing `MonthlyIncome`
+is imputed with the median from the training split only. The validation set is used for
+early stopping; the test set is held out and only used for the final score.
+
+| Split | ROC AUC |
+|---|---|
+| Validation | 0.864 |
+| Test | 0.868 |
+
+![ROC curve (validation set)](docs/roc_curve.png)
+
+## Run with Docker
+
+```bash
+docker build -t credit-scoring-api .
+docker run -p 9000:9000 credit-scoring-api
+```
+
+Pass `-e DATABASE_URL=...` to enable the audit log.
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
 ## Limitations
 
 - **US data from ~2008.** Incomes are in USD and borrower behaviour differs from other
   markets; results do not transfer to e.g. Thai applicants without retraining on local data.
 - **Scores are not calibrated probabilities.** Class weighting inflates the output, so a
   "20%" score does not mean a 20% chance of default.
-- **Evaluation is optimistic.** The validation set is used both for early stopping and
-  for the reported AUC (~0.87); there is no held-out test set yet.
 - **No authentication** on the API, and the audit log stores applicant inputs.
 - `age` and `NumberOfDependents` are model features; these may be protected attributes
   under lending regulations.
